@@ -77,12 +77,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .card:active{cursor:grabbing;opacity:.5}
 .card-client{font-size:12px;font-weight:500;margin-bottom:1px}
 .card-project{font-size:11px;color:var(--muted);margin-bottom:6px;line-height:1.4}
-.card-footer{display:flex;align-items:center;justify-content:space-between;gap:4px}
+.card-footer{display:flex;align-items:flex-start;justify-content:space-between;gap:4px;flex-wrap:wrap}
 .cat-pill{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500;white-space:nowrap}
 .cat-brand{background:#E1F5EE;color:#085041}.cat-pack{background:#FAECE7;color:#712B13}
 .cat-graphic{background:#E6F1FB;color:#0C447C}.cat-social{background:#FBEAF0;color:#72243E}
 .cat-digital{background:#FAEEDA;color:#633806}.cat-other{background:#F1EFE8;color:#444441}
-.card-amount{font-size:10px;color:var(--faint);font-family:var(--mono)}
+.card-amount{font-size:10px;color:var(--faint);font-family:var(--mono);word-break:break-all;text-align:right;flex-shrink:0}
 .card-date{font-size:10px;color:var(--faint);margin-top:3px;display:flex;align-items:center;gap:3px}
 .card-btns{display:flex;gap:2px;margin-top:6px;border-top:0.5px solid var(--border);padding-top:6px}
 .col-empty{text-align:center;padding:16px 0;font-size:11px;color:var(--faint)}
@@ -186,14 +186,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <div id="app">
   <div class="sidebar">
-    <div class="sidebar-logo" style="padding:1rem 1.25rem 0.875rem;cursor:pointer" onclick="document.getElementById('logo-input').click()" title="點擊更換 Logo">
-      <div id="logo-display" style="margin-bottom:4px">
-        <img id="logo-img" src="" alt="" style="display:none;max-height:36px;max-width:140px;object-fit:contain">
+    <div class="sidebar-logo" style="padding:1rem 1.25rem 0.875rem">
+      <div id="logo-display" style="margin-bottom:2px;min-height:36px;display:flex;align-items:center">
+        <img id="logo-img" src="" alt="" style="display:none;max-height:40px;max-width:150px;object-fit:contain">
         <div id="logo-text-fallback">
           <div class="logo-text">Yu(r) Room</div>
           <div class="logo-sub">Design Studio</div>
         </div>
       </div>
+      <label for="logo-input" style="font-size:10px;color:var(--faint);cursor:pointer;display:flex;align-items:center;gap:3px;margin-top:4px">
+        <i class="ti ti-upload" style="font-size:11px"></i> 更換 Logo
+      </label>
       <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="uploadLogo(this)">
     </div>
     <nav>
@@ -467,11 +470,16 @@ function renderBoard(){
     </div>`;
   }).join('');
 
-  // 結案區
+  // 結案區：依結案/交稿日排序，最新在左
+  const archivedSorted=[...archived].sort((a,b)=>{
+    const da=a.delivery||a.dep2||a.deadline||'0';
+    const db=b.delivery||b.dep2||b.deadline||'0';
+    return db.localeCompare(da);
+  });
   document.getElementById('archive-count').textContent=`（${archived.length} 件）`;
   document.getElementById('archive-list').innerHTML=archived.length===0
     ?`<div style="font-size:12px;color:var(--faint)">尚無結案紀錄</div>`
-    :archived.map(p=>`
+    :archivedSorted.map(p=>`
       <div class="archive-card">
         <div class="archive-client">${p.client}</div>
         <div class="archive-project">${p.project}</div>
@@ -839,6 +847,32 @@ function renderPayments(rows){
     </div>${rowsHTML}`;
 }
 
+
+// ── LOGO ──────────────────────────────────────────────────
+function uploadLogo(input){
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const dataUrl=e.target.result;
+    try{ localStorage.setItem('yurroom_logo',dataUrl); }catch(err){ console.log('Logo storage failed - file may be too large',err); }
+    applyLogo(dataUrl);
+  };
+  reader.onerror=function(){ alert('圖片讀取失敗，請換一張圖片'); };
+  reader.readAsDataURL(file);
+}
+function applyLogo(dataUrl){
+  const img=document.getElementById('logo-img');
+  const fallback=document.getElementById('logo-text-fallback');
+  if(!img||!fallback) return;
+  if(dataUrl && dataUrl.length>10){
+    img.src=dataUrl;
+    img.style.display='block';
+    fallback.style.display='none';
+  } else {
+    img.style.display='none';
+    fallback.style.display='block';
+  }
+}
 // ── UTILS ─────────────────────────────────────────────────
 function save(){localStorage.setItem('yurroom_projects',JSON.stringify(projects))}
 
