@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>登入中...</title></head>
+<body>
+<script>
+  window.opener?.postMessage({type:'oauth',hash:location.hash},'*');
+  window.close();
+</script>
+</body>
+</html>
