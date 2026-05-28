@@ -349,17 +349,9 @@ const SOP=[
 ];
 
 const TEMPLATES=[
-  {platform:'Threads',type:'品牌',text:`Let's do something fun together.
-一起將抽象的靈感，築成獨一無二的品牌寓所
-歡迎到主頁看我的作品，隨時私訊聊聊🪬`},
-  {platform:'Threads',type:'包裝',text:`Let's do something fun together.
-我是擁有 5 年經驗的包裝設計師
-曾操刀過多年知名連鎖品牌的節慶禮盒
-歡迎到主頁看我的作品，隨時私訊聊聊🪬`},
-  {platform:'Threads',type:'All',text:`Let's do something fun together.
-每一個有趣的專案，都始於一個微小的念頭
-我是擁有 5 年以上品牌與包裝經驗的視覺設計師
-歡迎到主頁看我的作品，隨時私訊聊聊🪬`},
+  {platform:'Threads',type:'品牌',text:"𝙻𝚎𝚝'𝚜 𝚍𝚘 𝚜𝚘𝚖𝚎𝚝𝚑𝚒𝚗𝚐 𝚏𝚞𝚗 𝚝𝚘𝚐𝚎𝚝𝚑𝚎𝚛.\n一起將抽象的靈感，築成獨一無二的品牌寓所\n歡迎到主頁看我的作品，隨時私訊聊聊💫"},
+  {platform:'Threads',type:'包裝',text:"𝙻𝚎𝚝'𝚜 𝚍𝚘 𝚜𝚘𝚖𝚎𝚝𝚑𝚒𝚗𝚐 𝚏𝚞𝚗 𝚝𝚘𝚐𝚎𝚝𝚑𝚎𝚛.\n我是擁有 5 年經驗的包裝設計師\n曾操刀過多年知名連鎖品牌的節慶禮盒\n歡迎到主頁看我的作品，隨時私訊聊聊💫"},
+  {platform:'Threads',type:'All',text:"𝙻𝚎𝚝'𝚜 𝚍𝚘 𝚜𝚘𝚖𝚎𝚝𝚑𝚒𝚗𝚐 𝚏𝚞𝚗 𝚝𝚘𝚐𝚎𝚝𝚑𝚎𝚛.\n每一個有趣的專案，都始於一個微小的念頭\n我是擁有 5 年以上品牌與包裝經驗的視覺設計師\n歡迎到主頁看我的作品，隨時私訊聊聊💫"},
   {platform:'私訊',type:'品牌',text:`Hi 對方稱呼！我是設計師郁瑄
 我擁有 5 年以上品牌的豐富經驗
 曾操刀黑貓宅急便25週年logo視覺設計
@@ -389,12 +381,13 @@ https://reurl.cc/mkgbg7`},
 ];
 
 const DEFAULT_DB=[
-  {id:'db1',name:'收支表',url:'https://docs.google.com/spreadsheets/d/1h5VxrPjWBu_2O-VQlWi-YMOiF9mf9yTIY9pHopNRBE0/edit',icon:'📊',note:'yu(r) room_finance'},
-  {id:'db2',name:'報價單',url:'https://docs.google.com/spreadsheets',icon:'🗒',note:'Google Sheets 報價單公版'},
-  {id:'db3',name:'設計需求問卷',url:'https://tally.so/r/68e8W5',icon:'📋',note:'tally.so'},
-  {id:'db4',name:'IG',url:'https://instagram.com/yur.room.design/',icon:'📷',note:'instagram.com/yur.room.design'},
-  {id:'db5',name:'作品網站',url:'https://readymag.website',icon:'🌐',note:'readymag.website'},
-  {id:'db6',name:'Line@',url:'https://lin.ee/tHTGrt1I',icon:'💬',note:'lin.ee/tHTGrt1I'},
+  {id:'db1',name:'收支表 yu(r) room_finance',url:'https://docs.google.com/spreadsheets/d/1h5VxrPjWBu_2O-VQlWi-YMOiF9mf9yTIY9pHopNRBE0/edit',icon:'📊',note:'yu(r) room_finance'},
+  {id:'db2',name:'報價單',url:'https://docs.google.com/spreadsheets/d/1nkuI0VrqP3m4rieGCzJXnT3T8Bf3TJl0R0bQ8hEUmGU/edit',icon:'🗒',note:'Google Sheets 報價單'},
+  {id:'db3',name:'收據',url:'https://docs.google.com/spreadsheets/d/1SdHXxmW-8NfDIcdArfDOGVMa8nUOYUkHIUgj7rOWmCk/edit',icon:'🧾',note:'Google Sheets 收據'},
+  {id:'db4',name:'設計需求問卷',url:'https://tally.so/r/68e8W5',icon:'📋',note:'tally.so'},
+  {id:'db5',name:'IG',url:'https://instagram.com/yur.room.design/',icon:'📷',note:'instagram.com/yur.room.design'},
+  {id:'db6',name:'作品網站',url:'https://readymag.website',icon:'🌐',note:'readymag.website'},
+  {id:'db7',name:'Line@',url:'https://lin.ee/tHTGrt1l',icon:'💬',note:'lin.ee/tHTGrt1l'},
 ];
 
 let tokenClient,accessToken,userInfo;
@@ -475,11 +468,11 @@ function renderBoard(){
       <div class="archive-card">
         <div class="archive-client">${p.client}</div>
         <div class="archive-project">${p.project}</div>
+        ${p.amount?`<div style="font-size:12px;font-family:var(--mono);font-weight:500;margin:4px 0 2px">$${Number(p.amount).toLocaleString()}</div>`:''}
+        ${p.delivery?`<div class="card-date" style="margin-bottom:4px"><i class="ti ti-calendar-check" style="font-size:10px"></i>交稿 ${p.delivery}</div>`:''}
         <div class="archive-meta">
           <span class="cat-pill ${CAT_CLASS[p.cat]||'cat-other'}" style="font-size:10px">${CAT_MAP[p.cat]||'其他'}</span>
-          <div style="display:flex;gap:4px">
-            <button class="btn ghost sm" onclick="openEdit('${p.id}')" title="編輯"><i class="ti ti-edit"></i></button>
-          </div>
+          <button class="btn ghost sm" onclick="openEdit('${p.id}')" title="編輯"><i class="ti ti-edit"></i></button>
         </div>
       </div>`).join('');
 
@@ -642,25 +635,34 @@ function renderSOP(){
       </div>
     </div>`).join('');
 
-  // 模板
+  // 模板：用全域 index 避開特殊字元編碼問題
   const platforms=[...new Set(TEMPLATES.map(t=>t.platform))];
+  let tmplIdx=0;
   document.getElementById('tmpl-grid').innerHTML=platforms.map(pl=>`
     <div>
       <div style="font-size:11px;font-weight:500;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">${pl}</div>
       <div style="display:flex;flex-direction:column;gap:8px">
-        ${TEMPLATES.filter(t=>t.platform===pl).map(t=>`
+        ${TEMPLATES.filter((t,i)=>{t._idx=i;return t.platform===pl}).map(t=>`
           <div class="tmpl-card">
             <div class="tmpl-label"><i class="ti ti-message"></i>${t.type}</div>
-            <div class="tmpl-text">${t.text}</div>
-            <button class="btn sm tmpl-copy" onclick="copyText(this,'${encodeURIComponent(t.text)}')"><i class="ti ti-copy"></i> 複製</button>
+            <div class="tmpl-text" style="white-space:pre-wrap">${t.text}</div>
+            <button class="btn sm tmpl-copy" style="margin-top:8px" onclick="copyTmpl(this,${t._idx})"><i class="ti ti-copy"></i> 複製</button>
           </div>`).join('')}
       </div>
     </div>`).join('');
 }
 
-function copyText(btn,encoded){
-  navigator.clipboard.writeText(decodeURIComponent(encoded)).then(()=>{
-    btn.innerHTML='<i class="ti ti-check"></i> 已複製';
+function copyTmpl(btn, idx){
+  const text=TEMPLATES[idx]?.text||'';
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.innerHTML='<i class="ti ti-check"></i> 已複製！';
+    setTimeout(()=>btn.innerHTML='<i class="ti ti-copy"></i> 複製',2000);
+  }).catch(()=>{
+    // fallback for older browsers
+    const ta=document.createElement('textarea');
+    ta.value=text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    btn.innerHTML='<i class="ti ti-check"></i> 已複製！';
     setTimeout(()=>btn.innerHTML='<i class="ti ti-copy"></i> 複製',2000);
   });
 }
@@ -669,13 +671,16 @@ function copyText(btn,encoded){
 function renderDB(){
   document.getElementById('db-grid').innerHTML=
     dbItems.map(d=>`
-      <a class="db-card" href="${d.url}" target="_blank" ondblclick="event.preventDefault();openEditDb('${d.id}')">
-        <div class="db-icon">${d.icon||'🔗'}</div>
-        <div>
-          <div class="db-name">${d.name}</div>
-          <div class="db-url">${d.note||''}</div>
-        </div>
-      </a>`).join('')
+      <div class="db-card" style="position:relative">
+        <a href="${d.url}" target="_blank" style="display:flex;align-items:flex-start;gap:10px;flex:1;text-decoration:none;color:inherit">
+          <div class="db-icon">${d.icon||'🔗'}</div>
+          <div>
+            <div class="db-name">${d.name}</div>
+            <div class="db-url">${d.note||''}</div>
+          </div>
+        </a>
+        <button class="btn ghost sm" onclick="openEditDb('${d.id}')" title="編輯" style="position:absolute;top:8px;right:8px;padding:2px 5px;opacity:.5" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.5"><i class="ti ti-pencil"></i></button>
+      </div>`).join('')
     +`<button class="db-add" onclick="openAddDb()"><i class="ti ti-plus"></i> 新增連結</button>`;
 }
 function openAddDb(){editDbId=null;['db-id','db-name','db-url','db-icon','db-note'].forEach(id=>document.getElementById(id).value='');document.getElementById('db-del').style.display='none';document.getElementById('modal-db').classList.add('open')}
@@ -695,7 +700,7 @@ function renderStats(){
 }
 
 function loadFinance(){
-  if(!accessToken){alert('請先登入');return;}
+  if(!accessToken){ tokenClient?.requestAccessToken({prompt:''}); return; }
   const base=`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values`;
   Promise.all([
     fetch(`${base}/年度總覽!B4:D20`,{headers:{Authorization:'Bearer '+accessToken}}).then(r=>r.json()),
@@ -703,11 +708,16 @@ function loadFinance(){
     fetch(`${base}/年度總覽!B12:D17`,{headers:{Authorization:'Bearer '+accessToken}}).then(r=>r.json()),
     fetch(`${base}/年度總覽!B22:D33`,{headers:{Authorization:'Bearer '+accessToken}}).then(r=>r.json()),
   ]).then(([summary,payments,cats,months])=>{
+    // 如果 token 過期，Google 回傳 401
+    if(summary.error?.code===401||summary.error?.code===403){
+      tokenClient?.requestAccessToken({prompt:''});
+      return;
+    }
     renderFinanceSummary(summary.values||[]);
     renderCats(cats.values||[]);
     renderMonths(months.values||[]);
     renderPayments(payments.values||[]);
-  }).catch(e=>{console.error(e);alert('讀取失敗，請確認 Sheets API 已授權');});
+  }).catch(e=>{console.error(e);});
 }
 
 function renderFinanceSummary(rows){
