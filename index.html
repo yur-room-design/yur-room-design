@@ -237,6 +237,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <div class="page-title">財務總覽</div>
         <div style="display:flex;gap:8px">
           <a href="https://docs.google.com/spreadsheets/d/1h5VxrPjWBu_2O-VQlWi-YMOiF9mf9yTIY9pHopNRBE0/edit" target="_blank" class="btn sm"><i class="ti ti-external-link"></i> 開啟 Sheets</a>
+          <button class="btn sm" onclick="clearCalCache()" title="讓所有已填日期重新同步到Google日曆"><i class="ti ti-calendar-x"></i> 清除日曆快取</button>
           <button class="btn" onclick="loadFinance()"><i class="ti ti-refresh"></i> 更新</button>
         </div>
       </div>
@@ -334,7 +335,7 @@ const SCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapi
 const SHEET_ID='1h5VxrPjWBu_2O-VQlWi-YMOiF9mf9yTIY9pHopNRBE0';
 
 const STAGES=['詢問中','報價寄出','訂金到帳','設計中','提案','修改中','完稿','結案'];
-const CAT_MAP={brand:'品牌識別',pack:'包裝設計',graphic:'視覺與平面',social:'社群視覺',digital:'數位與動態',other:'其他'};
+const CAT_MAP={brand:'品牌識別 Branding',pack:'包裝設計 Packaging',graphic:'視覺與平面 Graphic',social:'社群視覺 Social',digital:'數位與動態 Digital',other:'其他 Other'};
 const CAT_CLASS={brand:'cat-brand',pack:'cat-pack',graphic:'cat-graphic',social:'cat-social',digital:'cat-digital',other:'cat-other'};
 
 const SOP=[
@@ -491,17 +492,18 @@ function dropCard(si){if(!dragId)return;const p=projects.find(x=>x.id===dragId);
 function move(id,dir){const p=projects.find(x=>x.id===id);if(!p)return;const old=p.stage;p.stage=Math.max(0,Math.min(7,p.stage+dir));save();renderBoard();renderStats();handleStageChange(p,old,p.stage)}
 
 // ── CALENDAR ──────────────────────────────────────────────
-// 日期欄位設定時觸發日曆（不是靠移動卡片）
 function maybeAddCalendar(p, field){
-  if(!accessToken) return;
+  if(!accessToken){ console.log('日曆：未登入，跳過'); return; }
   const key=`${p.id}_${field}`;
-  if(calendarCreated[key]) return; // 已建立過，不重複
+  if(calendarCreated[key]){ console.log('日曆：已建立過，跳過',key); return; }
 
   const dateMap={deadline:p.deadline, proposal:p.proposal, dep1:p.dep1, dep2:p.dep2, delivery:p.delivery};
   const labelMap={deadline:'期望完成', proposal:'第一次提案', dep1:'第一期款收款', dep2:'第二期款收款', delivery:'實際交稿'};
   const colorMap={deadline:'5', proposal:'7', dep1:'2', dep2:'2', delivery:'1'};
   const dateStr=dateMap[field];
-  if(!dateStr) return;
+  if(!dateStr){ console.log('日曆：無日期，跳過',field); return; }
+
+  console.log('日曆：建立事件',p.client,labelMap[field],dateStr);
 
   const event={
     summary:`${p.client} — ${labelMap[field]}`,
@@ -518,12 +520,18 @@ function maybeAddCalendar(p, field){
     if(ev.id){
       calendarCreated[key]=true;
       localStorage.setItem('yurroom_cal',JSON.stringify(calendarCreated));
+      console.log('日曆：成功建立',ev.summary,ev.htmlLink);
+    } else {
+      console.log('日曆：建立失敗',ev);
     }
-  });
+  }).catch(e=>console.log('日曆錯誤：',e));
 }
 
-function handleStageChange(p,oldS,newS){
-  // 階段移動不直接建立日曆，只在儲存日期時建立
+// 清除日曆快取（讓所有日期重新觸發）
+function clearCalCache(){
+  calendarCreated={};
+  localStorage.removeItem('yurroom_cal');
+  alert('日曆快取已清除！下次儲存案件時，有日期的欄位都會重新同步到日曆。');
 }
 
 // ── MODAL ─────────────────────────────────────────────────
@@ -578,15 +586,27 @@ function saveCard(){
     note:document.getElementById('f-note').value,
   };
 
-  // 比對哪些日期欄位是新填的，觸發日曆
+  // 日曆：所有有值且跟原本不同的日期欄位都觸發
   const dateFields=['deadline','proposal','dep1','dep2','delivery'];
   dateFields.forEach(f=>{
-    if(data[f] && data[f]!==(oldP?.[f]||'')) maybeAddCalendar(data,f);
+    const newVal=data[f]||'';
+    const oldVal=oldP?.[f]||'';
+    if(newVal && newVal!==oldVal){
+      console.log('觸發日曆：',f,newVal);
+      maybeAddCalendar(data,f);
+    }
   });
 
-  // 比對期款日期，同步到 Sheets
-  if(data.dep1 && data.dep1!==(oldP?.dep1||'')) syncPayment(data,'dep1');
-  if(data.dep2 && data.dep2!==(oldP?.dep2||'')) syncPayment(data,'dep2');
+  // Sheets 同步：判斷單次付清
+  const dep1New=data.dep1||'', dep2New=data.dep2||'';
+  const dep1Old=oldP?.dep1||'', dep2Old=oldP?.dep2||'';
+  const isSingle=dep1New && dep2New && dep1New===dep2New;
+  if(isSingle && dep1New!==dep1Old){
+    syncPayment(data,'single');
+  } else {
+    if(dep1New && dep1New!==dep1Old) syncPayment(data,'dep1');
+    if(dep2New && dep2New!==dep2Old) syncPayment(data,'dep2');
+  }
 
   if(editId) projects=projects.map(p=>p.id===editId?data:p);
   else projects.push(data);
@@ -604,22 +624,27 @@ function deleteCard(){
 function syncPayment(p, depField){
   if(!accessToken) return;
   const total=Number(p.amount)||0;
-  const half=Math.round(total*0.5);
-  const period=depField==='dep1'?'第一期款':'第二期款';
-  const date=depField==='dep1'?p.dep1:p.dep2;
+  const catName=CAT_MAP[p.cat]||'其他 Other';
   const status='✦ 已付款 ✦';
 
-  // 新增一列到收款紀錄（A欄起）
-  // 格式：客戶,案件,服務,總金額,本次金額,期別,日期,狀態
-  const rowData = depField==='dep1'
-    ? [[p.client,p.project,CAT_MAP[p.cat]||'其他',total,half,period,date,status,'']]
-    : [['','','','',half,period,date,status,'']];
+  let rowData;
+  if(depField==='single'){
+    // 單次付清：同一天，一筆全額
+    rowData=[[p.client,p.project,catName,total,total,'單次付清',p.dep1,status,'']];
+  } else if(depField==='dep1'){
+    const half=Math.round(total*0.5);
+    rowData=[[p.client,p.project,catName,total,half,'第一期款',p.dep1,status,'']];
+  } else {
+    const half=Math.round(total*0.5);
+    rowData=[['','','','',half,'第二期款',p.dep2,status,'']];
+  }
 
-  fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/收款紀錄!A3:I3:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,{
+  const url=`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/收款紀錄!A:I:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+  fetch(url,{
     method:'POST',
     headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
     body:JSON.stringify({values:rowData}),
-  }).then(r=>r.json()).then(d=>console.log('Sheets 已新增：',period,d.updates));
+  }).then(r=>r.json()).then(d=>console.log('Sheets 已新增：',depField,d.updates)).catch(e=>console.log('Sheets 錯誤：',e));
 }
 
 // ── SOP ───────────────────────────────────────────────────
@@ -705,7 +730,7 @@ function loadFinance(){
   Promise.all([
     fetch(`${base}/年度總覽!B4:D20`,{headers:{Authorization:'Bearer '+accessToken}}).then(r=>r.json()),
     fetch(`${base}/收款紀錄!A3:I200`,{headers:{Authorization:'Bearer '+accessToken}}).then(r=>r.json()),
-    fetch(`${base}/年度總覽!B12:D17`,{headers:{Authorization:'Bearer '+accessToken}}).then(r=>r.json()),
+    fetch(`${base}/年度總覽!B11:D19`,{headers:{Authorization:'Bearer '+accessToken}}).then(r=>r.json()),
     fetch(`${base}/年度總覽!B22:D33`,{headers:{Authorization:'Bearer '+accessToken}}).then(r=>r.json()),
   ]).then(([summary,payments,cats,months])=>{
     // 如果 token 過期，Google 回傳 401
@@ -736,9 +761,18 @@ function renderFinanceSummary(rows){
 }
 
 function renderCats(rows){
-  const html=rows.filter(r=>r[1]&&parseFloat(String(r[1]).replace(/[^0-9.-]/g,''))>0).map(r=>{
-    const amt=parseFloat(String(r[1]).replace(/[^0-9.-]/g,''))||0;
-    return `<div class="fin-row"><span>${r[0]}</span><span style="display:flex;gap:16px;align-items:center"><span style="font-size:12px;color:var(--muted)">${r[2]||''}</span><span style="font-family:var(--mono);font-weight:500">$${amt.toLocaleString()}</span></span></div>`;
+  // 過濾：有類別名稱的列都顯示，不管金額是否為 0
+  const html=rows.filter(r=>r[0]&&String(r[0]).trim()).map(r=>{
+    const amt=parseFloat(String(r[1]||'0').replace(/[^0-9.-]/g,''))||0;
+    const pct=String(r[2]||'').trim();
+    if(amt===0) return ''; // 金額為 0 的不顯示
+    return `<div class="fin-row">
+      <span>${String(r[0]).trim()}</span>
+      <span style="display:flex;gap:16px;align-items:center">
+        <span style="font-size:12px;color:var(--muted)">${pct}</span>
+        <span style="font-family:var(--mono);font-weight:500">$${amt.toLocaleString()}</span>
+      </span>
+    </div>`;
   }).join('');
   document.getElementById('cat-breakdown').innerHTML=html||`<div class="fin-row" style="color:var(--faint)">尚無資料</div>`;
 }
