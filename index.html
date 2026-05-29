@@ -187,15 +187,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <div id="app">
   <div class="sidebar">
     <div class="sidebar-logo" style="padding:1rem 1.25rem 0.875rem">
-      <div id="logo-display" style="margin-bottom:2px;min-height:36px;display:flex;align-items:center">
-        <img id="logo-img" src="" alt="" style="display:none;max-height:40px;max-width:150px;object-fit:contain">
-        <div id="logo-text-fallback">
-          <div class="logo-text">Yu(r) Room</div>
-          <div class="logo-sub">Design Studio</div>
+      <label for="logo-input" style="cursor:pointer;display:block">
+        <div id="logo-display" style="display:flex;align-items:center;gap:10px;min-height:72px">
+          <img id="logo-img" src="" alt="" style="display:none;max-height:72px;max-width:90px;object-fit:contain;flex-shrink:0">
+          <div id="logo-text-fallback">
+            <div class="logo-text">Yu(r) Room</div>
+          </div>
+          <div id="logo-studio-label" style="font-size:11px;color:var(--muted);letter-spacing:.04em;line-height:1.4">Design<br>Studio</div>
         </div>
-      </div>
-      <label for="logo-input" style="font-size:10px;color:var(--faint);cursor:pointer;display:flex;align-items:center;gap:3px;margin-top:4px">
-        <i class="ti ti-upload" style="font-size:11px"></i> 更換 Logo
       </label>
       <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="uploadLogo(this)">
     </div>
