@@ -640,6 +640,28 @@ function saveCard(){
 
 function deleteCard(){
   if(!editId||!confirm('確定刪除？'))return;
+
+  // 刪除該案件在 Google Calendar 的所有相關事件
+  const dateFields=['deadline','proposal','dep1','dep2','delivery'];
+  dateFields.forEach(f=>{
+    const key=`${editId}_${f}`;
+    const eventId=calendarCreated[key];
+    if(eventId && accessToken){
+      fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,{
+        method:'DELETE',
+        headers:{Authorization:'Bearer '+accessToken},
+      }).then(r=>{
+        if(r.status===204||r.status===200){
+          console.log('日曆事件已刪除：',key);
+        } else {
+          console.log('日曆刪除失敗：',key,r.status);
+        }
+      }).catch(e=>console.log('日曆刪除錯誤：',e));
+      delete calendarCreated[key];
+    }
+  });
+  localStorage.setItem('yurroom_cal',JSON.stringify(calendarCreated));
+
   projects=projects.filter(p=>p.id!==editId);
   save();closeModal('modal-card');renderBoard();renderStats();
 }
